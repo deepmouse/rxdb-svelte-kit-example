@@ -36,3 +36,29 @@ Here's a rough outline what I did to get RxDB working:
 ```
 
 These steps might be incomplete and YMMV.
+
+### Usage
+
+```ts
+import { createRxDatabase, addRxPlugin } from 'rxdb';
+import { Subject } from 'rxjs';
+import * as idb from 'pouchdb-adapter-idb';
+import { browser } from '$app/env';
+
+const dbSubject$ = new Subject();
+
+if (browser) {
+    addRxPlugin(idb);
+    (async function () {
+        dbSubject$.next(await createRxDatabase({
+            name: 'mydb',
+            adapter: 'idb',
+            ignoreDuplicate: true
+        }));
+    })()
+}
+
+export const db$ = dbSubject$.asObservable()
+```
+
+Remember to not use the RxDB API outside a `$app/env.browser = true` check, or otherwise you may encounter errors.
