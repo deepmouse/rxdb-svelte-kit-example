@@ -41,24 +41,24 @@ These steps might be incomplete and YMMV.
 
 ```ts
 import { createRxDatabase, addRxPlugin } from 'rxdb';
-import { Subject } from 'rxjs';
+import { of, identity, from } from 'rxjs';
+import { filter, tap, switchMap, shareReplay } from 'rxjs/operators';
 import * as idb from 'pouchdb-adapter-idb';
 import { browser } from '$app/env';
 
-const dbSubject$ = new Subject();
-
-if (browser) {
-    addRxPlugin(idb);
-    (async function () {
-        dbSubject$.next(await createRxDatabase({
+const db$ = of(browser).pipe(
+    filter(identity),
+    tap(() => addRxPlugin(idb)),
+    switchMap(() => {
+        return from(createRxDatabase({
             name: 'mydb',
             adapter: 'idb',
             ignoreDuplicate: true
-        }));
-    })()
-}
-
-export const db$ = dbSubject$.asObservable()
+        }))
+    }),
+    shareReplay(1)
+)
+db$.subscribe(console.log)
 ```
 
 Remember to not use the RxDB API outside a `$app/env.browser = true` check, or otherwise you may encounter errors.
