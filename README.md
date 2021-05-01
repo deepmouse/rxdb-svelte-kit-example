@@ -12,3 +12,27 @@ To run this example:
 And navigate to http://localhost:3000
 
 The example checks for the `browser` in `$app/env` and doesn't run RxDB on the backend. This means that it will work offline with a SPA that has server side rendering disabled.
+
+## Steps to reproduce this repo
+
+Here's a rough outline what I did to get RxDB working:
+
+1. `npm install --save events rxdb pouchdb-adapter-idb rxjs`
+2. Modify your `svelte.config.js` like so:
+
+```
+    kit: {
+        vite: {
+            define: {
+                'process.env': {}
+            }
+        }
+    }
+```
+3. Add the following to your `app.html` inside `<head>`
+
+```
+<script>var global = globalThis</script>
+```
+
+These steps might be incomplete and YMMV.
