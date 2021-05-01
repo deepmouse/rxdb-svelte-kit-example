@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { createRxDatabase, addRxPlugin } from 'rxdb';
 	import { from, merge, of, Subject, combineLatest } from 'rxjs';
-	import { filter, map, switchMap, pluck } from 'rxjs/operators';
+	import { filter, switchMap, pluck, shareReplay } from 'rxjs/operators';
 	import { browser } from '$app/env';
 	import * as idb from 'pouchdb-adapter-idb';
 
@@ -50,7 +50,7 @@
 						}
 					})
 					.exec()
-			);
+			).pipe(shareReplay(1));
 
 			const clickCounterNotFound$ = existingClickCounter$.pipe(filter((doc) => doc === null));
 			const clickCounterFound$ = existingClickCounter$.pipe(filter((doc) => doc !== null));
@@ -61,7 +61,8 @@
 						id: 'clicks',
 						count: 0
 					});
-				})
+				}),
+				shareReplay(1)
 			);
 
 			const initialDoc$ = merge(clickCounterFound$, insertNewCounter$);
