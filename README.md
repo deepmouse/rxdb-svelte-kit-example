@@ -58,7 +58,10 @@ const db$ = of(browser).pipe(
     }),
     shareReplay(1)
 )
+
 db$.subscribe(console.log)
+// log output (in browser): RxDatabaseBase2 {internalStore: PouchDB, idleQueue: IdleQueue2, token: "ie2lkbhj48", _subs: Array(1), destroyed: false, …}
+// on server side `db$` will produce no values
 ```
 
 Remember to not use the RxDB API outside a `$app/env.browser = true` check, or otherwise you may encounter errors.
