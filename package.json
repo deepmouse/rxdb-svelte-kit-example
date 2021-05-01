@@ -1,5 +1,6 @@
 {
-  "name": "~TODO~",
+  "name": "rxdb-svelte-kit-example",
+  "description": "Example on how to use RxDB with svelte-kit (working as of May 1st 2021)",
   "version": "0.0.1",
   "scripts": {
     "dev": "svelte-kit dev",
