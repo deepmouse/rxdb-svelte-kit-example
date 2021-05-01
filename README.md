@@ -10,3 +10,5 @@ To run this example:
     npm run dev
 
 And navigate to http://localhost:3000
+
+The example checks for the `browser` in `$app/env` and doesn't run RxDB on the backend. This means that it will work offline with a SPA that has server side rendering disabled.
