@@ -41,13 +41,12 @@ These steps might be incomplete and YMMV.
 
 ```ts
 import { createRxDatabase, addRxPlugin } from 'rxdb';
-import { of, identity, from } from 'rxjs';
-import { filter, tap, switchMap, shareReplay } from 'rxjs/operators';
+import { of, NEVER, from } from 'rxjs';
+import { tap, switchMap, shareReplay } from 'rxjs/operators';
 import * as idb from 'pouchdb-adapter-idb';
 import { browser } from '$app/env';
 
-const db$ = of(browser).pipe(
-    filter(identity),
+const db$ = (browser ? of(null) : NEVER).pipe(
     tap(() => addRxPlugin(idb)),
     switchMap(() => {
         return from(createRxDatabase({
