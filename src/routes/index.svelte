@@ -1,7 +1,8 @@
 <script lang="ts" context="module">
-	import { createRxDatabase, addRxPlugin } from 'rxdb';
+	import * as RxDB from 'rxdb';
+	const { createRxDatabase, addRxPlugin } = RxDB;
 	import { from, merge, of, Subject, combineLatest, NEVER } from 'rxjs';
-	import { filter, switchMap, pluck, shareReplay, tap } from 'rxjs/operators';
+	import { filter, switchMap, pluck, shareReplay, tap } from 'rxjs/operators/index.js';
 	import { browser } from '$app/env';
 </script>
 
