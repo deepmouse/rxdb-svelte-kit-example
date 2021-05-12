@@ -1,13 +1,14 @@
 <script lang="ts" context="module">
 	import { createRxDatabase, addRxPlugin } from 'rxdb';
-	import { from, merge, of, Subject, combineLatest } from 'rxjs';
-	import { filter, switchMap, pluck, shareReplay } from 'rxjs/operators';
+	import { from, merge, of, Subject, combineLatest, NEVER } from 'rxjs';
+	import { filter, switchMap, pluck, shareReplay, tap } from 'rxjs/operators';
 	import { browser } from '$app/env';
 </script>
+
 <script lang="ts">
 	import * as idb from 'pouchdb-adapter-idb';
 
-	let initialCounter$ = of('Loading...');
+	let count$ = of('Loading...');
 
 	let saveCount$ = new Subject();
 
@@ -26,62 +27,74 @@
 		}
 	};
 
-	if (browser) {
-		addRxPlugin(idb);
+	const db$ = (browser ? of(null) : NEVER).pipe(
+		tap(() => addRxPlugin(idb)),
+		switchMap(() => {
+			return from(
+				createRxDatabase({
+					name: 'mydb',
+					adapter: 'idb',
+					ignoreDuplicate: true
+				})
+			);
+		}),
+		shareReplay(1)
+	);
 
-		(async function () {
-			const db = await createRxDatabase({
-				name: 'mydb',
-				adapter: 'idb',
-				ignoreDuplicate: true
-			});
+	const coll$ = db$.pipe(
+		switchMap((db) => {
+			return from(
+				db.addCollections({
+					counters: {
+						schema: schema
+					}
+				})
+			);
+		}),
+		shareReplay(1)
+	);
 
-			await db.addCollections({
-				counters: {
-					schema: schema
-				}
-			});
-
-			const counterCollection = db.counters;
-
-			const existingClickCounter$ = from(
-				counterCollection
+	const existingClickCounter$ = combineLatest([coll$, db$]).pipe(
+		switchMap(([_, db]) => {
+			return from(
+				db.counters
 					.findOne({
 						selector: {
 							id: 'clicks'
 						}
 					})
 					.exec()
-			).pipe(shareReplay(1));
-
-			const clickCounterNotFound$ = existingClickCounter$.pipe(filter((doc) => doc === null));
-			const clickCounterFound$ = existingClickCounter$.pipe(filter((doc) => doc !== null));
-
-			const insertNewCounter$ = clickCounterNotFound$.pipe(
-				switchMap(() => {
-					return counterCollection.insert({
-						id: 'clicks',
-						count: 0
-					});
-				}),
-				shareReplay(1)
 			);
+		}),
+		shareReplay(1)
+	);
 
-			const initialDoc$ = merge(clickCounterFound$, insertNewCounter$);
+	const clickCounterNotFound$ = existingClickCounter$.pipe(filter((doc) => doc === null));
+	const clickCounterFound$ = existingClickCounter$.pipe(filter((doc) => doc !== null));
 
-			const updateDoc$ = combineLatest([initialDoc$, saveCount$]);
-
-			updateDoc$.subscribe(([doc]) => {
-				doc.update({
-					$set: {
-						count: count
-					}
-				});
+	const insertNewCounter$ = combineLatest([clickCounterNotFound$, db$]).pipe(
+		switchMap(([_, db]) => {
+			return db.counters.insert({
+				id: 'clicks',
+				count: 0
 			});
+		}),
+		shareReplay(1)
+	);
 
-			initialCounter$ = initialDoc$.pipe(pluck('count'));
-		})();
-	}
+	const initialDoc$ = merge(clickCounterFound$, insertNewCounter$);
+	const updateDoc$ = combineLatest([initialDoc$, saveCount$]);
+
+	updateDoc$.subscribe(([doc]) => {
+		doc.update({
+			$set: {
+				count: count
+			}
+		});
+	});
+
+	count$ = initialDoc$.pipe(pluck('count'));
+
 	let count;
 
 	const increment = () => {
@@ -89,7 +102,7 @@
 		saveCount$.next();
 	};
 
-	$: count = $initialCounter$;
+	$: count = $count$;
 </script>
 
 <p>
