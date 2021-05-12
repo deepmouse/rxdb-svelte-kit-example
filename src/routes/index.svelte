@@ -1,8 +1,10 @@
-<script lang="ts">
+<script lang="ts" context="module">
 	import { createRxDatabase, addRxPlugin } from 'rxdb';
 	import { from, merge, of, Subject, combineLatest } from 'rxjs';
 	import { filter, switchMap, pluck, shareReplay } from 'rxjs/operators';
 	import { browser } from '$app/env';
+</script>
+<script lang="ts">
 	import * as idb from 'pouchdb-adapter-idb';
 
 	let initialCounter$ = of('Loading...');
